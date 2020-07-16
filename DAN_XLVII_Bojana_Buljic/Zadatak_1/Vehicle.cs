@@ -1,51 +1,92 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace Zadatak_1
 {
-    enum Direction { north, south }
-
     class Vehicle
     {
-        //random instance for generating random directions
-        Random rnd = new Random();
-
-        #region Vehicle properties
-        //public string Name { get; set; }
+        #region Vehicle properties        
         public int OrderNo { get; set; }
         /// <summary>
         /// direction property of the vehicle
-        /// </summary>
-        private string direction;
-        public string DirectionV
-        {
-            get
-            {
-                return direction;
-            }
-            set
-            {
-                direction = ((Direction)rnd.Next(0, Enum.GetNames(typeof(Direction)).Length)).ToString();
-            }
-
-        }
+        /// </summary>        
+        public string Direction { get; set; }
         #endregion
 
+        //random instance for generating random directions
+        Random rnd = new Random();
+        public static string currentDirection = "";
+        //string array with two possible directions for vehicle
+        string[] Directions = { "North", "South" };
+
+        /// <summary>
+        /// Event for creating one vehicle at a time
+        /// </summary>
+        private static AutoResetEvent vehicleEvent = new AutoResetEvent(true);
+        /// <summary>
+        /// event for wait all vehicles created
+        /// </summary>
+        private static CountdownEvent countdown = new CountdownEvent(Program.vehiclesNum);
+        //list of all vehicles created
+        public static List<Vehicle> allVehicles = new List<Vehicle>();
+
+        //delegate 
+        public delegate void Notification();
+        //event based on delegate
+        public event Notification OnNotification;
+
+        //rais an event
+        public void Notify()
+        {
+            if (OnNotification != null)
+            {
+                OnNotification();
+            }
+        }
+
         #region Constructor
-        
+        public Vehicle(int orderNo, string direction)
+        {
+            OrderNo = orderNo;
+            Direction = direction;
+        }
+
         public Vehicle()
         {
 
-
-        }
-        public Vehicle(int order)
-        {
-            OrderNo = order;
-            
         }
         #endregion
+
+        public void CreateVehicle()
+        {
+            int order;
+            string direction;
+
+            vehicleEvent.WaitOne();
+            //sets the order number for a vehicle
+            order = allVehicles.Count + 1;
+            //get random direction for a vehicle from Directions array
+            direction = Directions[rnd.Next(0, 2)];
+            Vehicle vehicle = new Vehicle(order, direction);
+            allVehicles.Add(vehicle);
+
+            if (allVehicles.Count == Program.vehiclesNum)
+            {
+                OnNotification = Program.PrintVehiclesCreated;
+                Notify();
+            }
+            //signal when all vehicles are created
+            countdown.Signal();
+
+            vehicleEvent.Set();
+
+            //allow one at a time vehicle to cross the bridge
+            Bridge.next.WaitOne();
+            countdown.Wait();
+
+            Bridge bridge = new Bridge();
+            bridge.PassTheBridge(direction, order);
+        }
     }
 }

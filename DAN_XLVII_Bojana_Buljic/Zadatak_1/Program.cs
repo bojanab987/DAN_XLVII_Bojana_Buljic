@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace Zadatak_1
 {
     class Program
     {
+        public static int vehiclesNum;
+
+        public static Stopwatch swApp = new Stopwatch();
         /// <summary>
         /// Method for generating number of vehicles
         /// </summary>
@@ -24,30 +26,36 @@ namespace Zadatak_1
         /// Method for printing notifications about total number of vehicles and oreder and direction of each vehicle
         /// </summary>
         /// <param name="vehicles"></param>
-        public static void PrintVehiclesCreated(Vehicle[] vehicles)
+        public static void PrintVehiclesCreated()
         {
-            Console.WriteLine("Total number of vehicles is: {0}", vehicles.Length);
-            for (int i = 0; i < vehicles.Length; i++)
+            List<Vehicle> vehicles = Vehicle.allVehicles.ToList();
+
+            Console.WriteLine("Total number of vehicles is: {0}", vehiclesNum);
+            for (int i = 0; i < vehicles.Count; i++)
             {
-                Console.WriteLine("Vehicle no " + vehicles[i].OrderNo + "goes to direction: " + vehicles[i].DirectionV);
+                Console.WriteLine("Vehicle no " + vehicles[i].OrderNo + " goes to direction: " + vehicles[i].Direction);
             }
         }
 
         static void Main(string[] args)
         {
-            Stopwatch swApp = new Stopwatch();
             swApp.Start();
-            int num = GetNoOfVehicle();
-            Vehicle[] vehicles = new Vehicle[num];
-            for (int i = 0; i < num; i++)
-            {
-                Vehicle car = new Vehicle(i + 1);
-                vehicles[i] = car;
-            }
-            PrintVehiclesCreated(vehicles);
+            vehiclesNum = GetNoOfVehicle();
+            List<Thread> threads = new List<Thread>();
+            Vehicle vehicle = new Vehicle();
 
-            swApp.Stop();
-            Console.WriteLine(swApp.ElapsedMilliseconds);
+            for (int i = 0; i < vehiclesNum; i++)
+            {
+                Thread th = new Thread(vehicle.CreateVehicle);
+                threads.Add(th);
+            }
+
+            foreach (var t in threads)
+            {
+                t.Start();
+            }
+
+            Console.ReadLine();
         }
     }
 }
