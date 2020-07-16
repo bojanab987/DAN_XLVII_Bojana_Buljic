@@ -37,10 +37,10 @@ namespace Zadatak_1
                 if (orderNo == Vehicle.allVehicles.Count)
                 {
                     Program.swApp.Stop();
-                    TimeSpan time = Program.swApp.Elapsed;
+                    Program.swApp.Stop();
+                    long time = Program.swApp.ElapsedMilliseconds;
 
-                    string appTime = String.Format("{0}", time.Milliseconds);
-                    Console.WriteLine("\n Application run time is: " + appTime + " milliseconds");
+                    Console.WriteLine("\n Application run time is: " + time + " milliseconds");
                 }
             }
             else
